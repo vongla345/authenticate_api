@@ -14,7 +14,6 @@ origins = [
     "http://127.0.0.1:8000",  # Thêm địa chỉ này nếu frontend chạy tại đây
     "http://127.0.0.1:8080",
     "http://104.214.177.160",
-    "https://104.214.177.160",
 ]
 
 app.add_middleware(
@@ -51,6 +50,7 @@ def get_face_encoding(image_file: UploadFile, image_type: str):
         raise  # Bảo toàn lỗi HTTPException đã tạo
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing the {image_type} image: {str(e)}")
+
 
 
 @app.post("/authenticate", response_model=SimilarityResponse)
@@ -107,6 +107,7 @@ async def compare_faces(
             },
             "message": "An unexpected error occurred during face verification."
         }
+
 
 
 def validate_image_file(image_file: UploadFile):
