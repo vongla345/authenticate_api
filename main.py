@@ -12,7 +12,7 @@ origins = [
     "http://localhost:8000",
     "http://localhost:8080",
     "http://127.0.0.1:8000",  # Thêm địa chỉ này nếu frontend chạy tại đây
-    "http://127.0.0.1:8080"
+    "http://127.0.0.1:8080",
 ]
 
 app.add_middleware(
@@ -132,4 +132,4 @@ async def check_face(image: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8081)
