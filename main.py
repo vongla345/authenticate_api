@@ -6,13 +6,14 @@ import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=False)
 
 origins = [
     "http://localhost:8000",
     "http://localhost:8080",
     "http://127.0.0.1:8000",  # Thêm địa chỉ này nếu frontend chạy tại đây
     "http://127.0.0.1:8080",
+    "http://104.214.177.160",
 ]
 
 app.add_middleware(
@@ -42,6 +43,8 @@ def get_face_encoding(image_file: UploadFile, image_type: str):
         if len(face_encodings) == 0:
             raise HTTPException(status_code=400, detail=f"No face detected in the {image_type} image.")
 
+        if len(face_encodings) > 1:
+            raise HTTPException(status_code=400, detail=f"More than one face detected in the {image_type} image.")
         return face_encodings[0]
     except HTTPException:
         raise  # Bảo toàn lỗi HTTPException đã tạo
@@ -74,13 +77,37 @@ async def compare_faces(
         status = "approved" if similarity >= 50 else "not approved"
         print(f"Authentication status: {status}")
 
-        return SimilarityResponse(similarity=similarity, status=status)
+        return {
+            "success": True,
+            "data": {
+                "similarity": similarity,
+                "status": status
+            },
+            "message": "Face verification successful."
+        }
     except HTTPException as http_exc:
         # Lỗi đã được xử lý trong get_face_encoding
-        raise http_exc
+        return {
+            "success": False,
+            "error": {
+                "code": http_exc.status_code,
+                "type": "FaceDetectionError",
+                "detail": http_exc.detail
+            },
+            "message": "Error during face verification."
+        }
     except Exception as e:
         # Xử lý lỗi khác
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return {
+            "success": False,
+            "error": {
+                "code": 500,
+                "type": "UnexpectedError",
+                "detail": str(e)
+            },
+            "message": "An unexpected error occurred during face verification."
+        }
+
 
 
 def validate_image_file(image_file: UploadFile):
@@ -102,7 +129,7 @@ def validate_image_file(image_file: UploadFile):
     return True
 
 
-@app.post("/check-face")
+@app.post("/check-face/")
 async def check_face(image: UploadFile = File(...)):
     """
     Check if an uploaded image contains a face.
